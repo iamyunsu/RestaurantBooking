@@ -1,9 +1,9 @@
-#pragma once
+﻿#pragma once
 #include "Schedule.cpp"
 
 class MailSender {
 public:
-	void sendMail(Schedule* schedule) {
+	virtual void sendMail(Schedule* schedule) {
 		//send mail
 	}
 };
