@@ -134,6 +134,7 @@
     <ClCompile Include="Schedule.cpp" />
     <ClCompile Include="SmsSender.cpp" />
     <ClCompile Include="test.cpp" />
+    <ClCompile Include="TestableBookingScheduler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
