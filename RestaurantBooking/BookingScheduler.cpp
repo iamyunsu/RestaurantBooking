@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <vector>
 #include <stdexcept>
 #include <algorithm>
@@ -18,12 +18,12 @@ public:
 
     void addSchedule(Schedule* schedule) {
 
-        // Á¤°¢¿¡ ¿¹¾àÇÏÁö ¾ÊÀ» °æ¿ì RuntimeException ¹ß»ı
+        // ì •ê°ì— ì˜ˆì•½í•˜ì§€ ì•Šì„ ê²½ìš° RuntimeException ë°œìƒ
         if (schedule->getDateTime().tm_min != 0) {
             throw std::runtime_error("Booking should be on the hour.");
         }
 
-        // ½Ã°£´ç ¿¹¾àÀÎ¿øÀ» ÃÊ°úÇÒ °æ¿ì RuntimeException ¹ß»ı
+        // ì‹œê°„ë‹¹ ì˜ˆì•½ì¸ì›ì„ ì´ˆê³¼í•  ê²½ìš° RuntimeException ë°œìƒ
         int numberOfPeople = schedule->getNumberOfPeople();
         for (Schedule* bookedSchedule : schedules) {
             if (isSameTime(bookedSchedule->getDateTime(), schedule->getDateTime())) {
@@ -34,22 +34,27 @@ public:
             throw std::runtime_error("Number of people is over restaurant capacity per hour");
         }
 
-        /*
-        // ÀÏ¿äÀÏ¿¡´Â ½Ã½ºÅÛÀ» ¿ÀÇÂÇÏÁö ¾Ê´Â´Ù.
-        time_t now = time(nullptr);
+#if 1
+        // ì¼ìš”ì¼ì—ëŠ” ì‹œìŠ¤í…œì„ ì˜¤í”ˆí•˜ì§€ ì•ŠëŠ”ë‹¤.
+        time_t now = getNow();
         if (getDayOfWeek(now) == "Sunday") {
             throw std::runtime_error("Booking system is not available on sunday");
         }
-        */
+#endif
 
         schedules.push_back(schedule);
 
-        // °í°´¿¡°Ô SMS ¹ß¼Û
+        // ê³ ê°ì—ê²Œ SMS ë°œì†¡
         smsSender->send(schedule);
-        // °í°´ÀÌ E MailÀ» °¡Áö°í ÀÖÀ» °æ¿ì E Mail ¹ß¼Û
+        // ê³ ê°ì´ E Mailì„ ê°€ì§€ê³  ìˆì„ ê²½ìš° E Mail ë°œì†¡
         if (schedule->getCustomer().getEmail() != "") {
             mailSender->sendMail(schedule);
         }
+    }
+
+    virtual time_t getNow()
+    {
+        return time(nullptr);
     }
 
     bool hasSchedule(Schedule* schedule) {
@@ -66,12 +71,12 @@ public:
     }
 
 private:
-    //µÎ ½Ã°£ÀÌ °°ÀºÁö È®ÀÎ
+    //ë‘ ì‹œê°„ì´ ê°™ì€ì§€ í™•ì¸
     bool isSameTime(tm a, tm b) {
         return mktime(&a) == mktime(&b);
     }
 
-    //¿äÀÏÀ» ¾Ë·ÁÁÖ´Â ÇÔ¼ö
+    //ìš”ì¼ì„ ì•Œë ¤ì£¼ëŠ” í•¨ìˆ˜
     string getDayOfWeek(time_t tm_t) {
         tm tmTime;
         localtime_s(&tmTime, &tm_t);
