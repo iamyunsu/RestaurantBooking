@@ -1,5 +1,4 @@
-﻿#include <iostream>
-#include "gtest/gtest.h"
+﻿#include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "BookingScheduler.cpp"
 #include "TestableBookingScheduler.cpp"
@@ -8,30 +7,17 @@ using namespace testing;
 
 class TestableMailSender : public MailSender {
 public:
-	virtual void sendMail(Schedule* schedule) override {
-		countSendMailMethodIsCalled++;
-	}
-	int getCountSendMailMethodIsCalled() {
-		return countSendMailMethodIsCalled;
-	}
-private:
-	int countSendMailMethodIsCalled = 0;
+	MOCK_METHOD(void, sendMail, (Schedule*), (override));
 };
 
 class TestableSmsSender : public SmsSender {
 public:
-	void send(Schedule* schedule) override {
-		//send message to PhoneNumber
-		std::cout << "Sending test SMS" << std::endl;
-		sendMethodIsCalled = true;
-	}
+	MOCK_METHOD(void, send, (Schedule*), (override));
+};
 
-	bool isSendMethodIsCalled() {
-		return sendMethodIsCalled;
-	}
-
-private:
-	bool sendMethodIsCalled;
+class MockCustomer : public Customer {
+public:
+	MOCK_METHOD(string, getEmail, (), (override));
 };
 
 class BookingItem :public testing::Test {
@@ -44,6 +30,11 @@ protected:
 
 		bookingScheduler.setSmsSender(&testableSmsSender);
 		bookingScheduler.setMailSender(&testableMailSender);
+
+		//EXPECT_CALL(CUSTOMER, getEmail, (), ())
+		//	.WillRepeatedly(testing::Return(""));
+		//EXPECT_CALL(CUSTOMER_WITH_MAIL, getEmail, (), ())
+		//	.WillRepeatedly(testing::Return("test@test.com"));
 	}
 public:
 	tm getTime(int year, int mon, int day, int hour, int min) {
@@ -58,21 +49,22 @@ public:
 		return base;
 	}
 
-	//tm OnTheHour;
-	//tm notOnTheHour;
-	//Customer customer{ "Fake name", "010-1234-5678" };
 	tm NOT_ON_THE_HOUR;
 	tm ON_THE_HOUR;
 	tm DATE_TIME_SUNDAY;
 	tm DATE_TIME_MONDAY;
+	//MockCustomer CUSTOMER;
+	//MockCustomer CUSTOMER_WITH_MAIL;
 	Customer CUSTOMER{ "Fake name", "010-1234-5678" };
 	Customer CUSTOMER_WITH_MAIL{ "Fake Name", "010-1234-5678", "test@test.com" };
 	const int UNDER_CAPACITY = 1;
 	const int CAPACITY_PER_HOUR = 3;
 
 	BookingScheduler bookingScheduler{ CAPACITY_PER_HOUR };
-	TestableSmsSender testableSmsSender;
-	TestableMailSender testableMailSender;
+	//TestableSmsSender testableSmsSender;
+	//TestableMailSender testableMailSender;
+	testing::NiceMock<TestableSmsSender> testableSmsSender;
+	testing::NiceMock<TestableMailSender> testableMailSender;
 
 };
 
@@ -136,33 +128,33 @@ TEST_F(BookingItem, 예약완료시_SMS는_무조건_발송) {
 	// arrange
 	Schedule* schedule = new Schedule{ ON_THE_HOUR, UNDER_CAPACITY, CUSTOMER };
 
-	// act
-	bookingScheduler.addSchedule(schedule);
+	// act, assert
+	EXPECT_CALL(testableSmsSender, send(schedule))
+		.Times(1);
 
-	// assert
-	EXPECT_EQ(true, testableSmsSender.isSendMethodIsCalled());
+	bookingScheduler.addSchedule(schedule);
 }
 
 TEST_F(BookingItem, 이메일이_없는_경우에는_이메일_미발송) {
 	// arrange
-	Schedule* schedule = new Schedule(ON_THE_HOUR, UNDER_CAPACITY, CUSTOMER_WITH_MAIL);
+	Schedule* schedule = new Schedule(ON_THE_HOUR, UNDER_CAPACITY, CUSTOMER);
 
-	//act
+	// act, assert
+	EXPECT_CALL(testableMailSender, sendMail(schedule))
+		.Times(0);
+
 	bookingScheduler.addSchedule(schedule);
-
-	//assert
-	EXPECT_EQ(1, testableMailSender.getCountSendMailMethodIsCalled());
 }
 
 TEST_F(BookingItem, 이메일이_있는_경우에는_이메일_발송) {
 	// arrange
-	Schedule* schedule = new Schedule(ON_THE_HOUR, UNDER_CAPACITY, CUSTOMER);
+	Schedule* schedule = new Schedule(ON_THE_HOUR, UNDER_CAPACITY, CUSTOMER_WITH_MAIL);
 
-	//act
+	// act, assert
+	EXPECT_CALL(testableMailSender, sendMail(schedule))
+		.Times(1);
+
 	bookingScheduler.addSchedule(schedule);
-
-	//assert
-	EXPECT_EQ(0, testableMailSender.getCountSendMailMethodIsCalled());
 }
 
 TEST_F(BookingItem, 현재날짜가_일요일인_경우_예약불가_예외처리) {

@@ -1,4 +1,6 @@
-﻿#include "BookingScheduler.cpp"
+﻿#include "gtest/gtest.h"
+#include "gmock/gmock.h"
+#include "BookingScheduler.cpp"
 
 class TestableBookingScheduler : public BookingScheduler {
 public:
